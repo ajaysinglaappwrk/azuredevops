@@ -5,7 +5,7 @@ describe("App", () => {
   it("renders without crashing", () => {
     render(<App />);
     expect(
-      screen.getByRole("heading", { name: "Welcome to Spincv" })
+      screen.getByRole("heading", { name: "Welcome to Spincv123" })
     ).toBeInTheDocument();
   });
 });

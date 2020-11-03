@@ -15,8 +15,9 @@ export default function Home() {
 
         <p className="description">
          Start creating your own profiles with Spincv
+        
         </p>
-
+        <span> Best recruitment plateform in canada</span>
         <div className="grid">
           <a href="https://nextjs.org/docs" className="card">
             <h3>Documentation &rarr;</h3>
