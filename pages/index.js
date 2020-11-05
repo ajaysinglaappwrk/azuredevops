@@ -1,210 +1,160 @@
-import Head from 'next/head'
+import React, { Fragment } from 'react';
+import { connect } from 'react-redux';
+import { withTranslation } from 'react-i18next';
+import { companyService } from '../services/company.service'
+import { Provider } from 'react-redux';
+import { store } from '../helpers/store';
+class CounterSection extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      companies: []
+    }
+  }
+  componentDidMount() {
+    companyService.getDashboardCompanies().then((res) => {
+      this.setState({ companies: res });
 
-export default function Home() {
-  return (
-    <div className="container">
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    })
+  }
 
-      <main>
-        <h1 className="title">
-          Welcome to Spincv
-        </h1>
+  removeTags(str) {
+    if ((str === null) || (str === ''))
+      return false;
+    else
+      str = str.toString();
 
-        <p className="description">
-         Start creating your own profiles with Spincv
-        
-        </p>
-        <span> Best recruitment plateform in canada</span>
-        <div className="grid">
-          <a href="https://nextjs.org/docs" className="card">
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+    // Regular expression to identify HTML tags in  
+    // the input string. Replacing the identified  
+    // HTML tag with a null string. 
+    return str.replace(/(<([^>]+)>)/ig, '');
+  }
 
-          <a href="https://nextjs.org/learn" className="card">
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+  render() {
+    const { i18n } = this.props;
+    return (
+      <Provider store={store} >
+        <div className="careerfy-main-section " >
+          <div className="container">
+            <div className="row">
+              <div className="col-md-12 col-sm-12">
+                <div className="careerfy-counter">
+                  {
+                    this.renderData()
+                  }
+                </div>
+              </div>
 
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className="card"
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
-
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className="card"
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
+            </div>
+          </div>
         </div>
-      </main>
+      </Provider>
+    );
+  }
 
-      <footer>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className="logo" />
-        </a>
-      </footer>
+  renderData() {
+    const { i18n } = this.props;
+    var permanentClients = this.state.companies.filter(x => x.isFutureClient != true);
+    var futureClients = this.state.companies.filter(x => x.isFutureClient == true);
+    return (
+      <div className="row " style={{ marginBottom: '3em' }} >
+        <div className="col-md-12" style={{ marginTop: '3em' }} >
+          <section className="careerfy-fancy-title">
+            <h2>{i18n.t('Banner.FindCompanyLabel')}</h2>
+            <p>{i18n.t('Banner.FindCompanyParagraph')}</p>
+          </section>
+          <div className="careerfy-blog careerfy-blog-grid">
+            <ul className="blog-items">
+              {
+                permanentClients.map((company, index) => {
+                  var reqLength = 80;
+                  var companyDesc = this.removeTags(company.businessDescription);
+                  if (companyDesc.length > reqLength) {
+                    var nextStr = companyDesc.substr(reqLength);
+                    var firstSpaceIndex = nextStr.indexOf(" ");
+                    companyDesc = firstSpaceIndex > 0 ? companyDesc.substr(0, (reqLength + firstSpaceIndex)) : companyDesc.substr(0, reqLength);
+                  }
+                  const profileUrl = "/" + company.name;
+                  // const description = !!company.businessDescription ? (company.businessDescription.length > 100 ? company.businessDescription.substr(0, 90) : company.businessDescription) : "";
+                  const industry = company.industries.find(x => { return this.props.i18n.language == "en" ? x.languageId == 1 : x.languageId == 2 })
+                  return (
+                    <li className="blog-home-item" key={index}>
+                      <div onClick={() => window.location.href = profileUrl}>
+                        <figure><img src={company.companyLogoUrl} alt="" /></figure>
+                        <div className="careerfy-blog-grid-text">
+                          <div className="careerfy-blog-tag"> <a href={company.name}>{industry ? industry.description : ""} </a> </div>
+                          <h2 style={{ height: "90px" }}>{company.displayName}</h2>
+                          <div className="textWidget" dangerouslySetInnerHTML={{ __html: companyDesc }} />
+                          <a className="read-more-btn" href={profileUrl}>{i18n.t('Banner.SeeMoreBtnText')} </a>
+                          <span className="careerfy-read-more careerfy-bgcolor">{i18n.t('Banner.ViewProfilBtnText')}</span>
+                        </div>
+                      </div>
+                    </li>
+                  )
+                })
+              }
 
-      <style jsx>{`
-        .container {
-          min-height: 100vh;
-          padding: 0 0.5rem;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
 
-        main {
-          padding: 5rem 0;
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          align-items: center;
-        }
+            </ul>
+          </div>
+          {
+            futureClients && futureClients.length > 0 &&
+            <Fragment>
+              <section className="careerfy-fancy-title">
+                <h2>{i18n.t('Banner.FutureClientLabel')}</h2>
+              </section>
+              <div className="careerfy-blog careerfy-blog-grid">
+                <ul className="blog-items" style={{ cursor: "none" }}>
+                  {
+                    futureClients.map((company, index) => {
+                      var reqLength = 80;
+                      var companyDesc = this.removeTags(company.businessDescription);
+                      if (companyDesc.length > reqLength) {
+                        var nextStr = companyDesc.substr(reqLength);
+                        var firstSpaceIndex = nextStr.indexOf(" ");
+                        companyDesc = firstSpaceIndex > 0 ? companyDesc.substr(0, (reqLength + firstSpaceIndex)) : companyDesc.substr(0, reqLength);
+                      }
+                      const profileUrl = "/" + company.name;
+                      // const description = !!company.businessDescription ? (company.businessDescription.length > 100 ? company.businessDescription.substr(0, 90) : company.businessDescription) : "";
+                      const industry = company.industries.find(x => { return this.props.i18n.language == "en" ? x.languageId == 1 : x.languageId == 2 })
+                      return (
+                        <li className="blog-home-item" key={index}>
+                          <div>
+                            <figure><img src={company.companyLogoUrl} alt="" /></figure>
+                            <div className="careerfy-blog-grid-text">
+                              <div className="careerfy-blog-tag"> <a>{industry ? industry.description : ""} </a> </div>
+                              <h2 style={{ height: "90px" }}>{company.displayName}</h2>
+                              <div className="textWidget" dangerouslySetInnerHTML={{ __html: companyDesc }} />
+                              <a className="read-more-btn">{i18n.t('Banner.SeeMoreBtnText')} </a>
+                              <span className="careerfy-read-more careerfy-bgcolor">{i18n.t('Banner.FutureClientBtnText')}</span>
+                            </div>
+                          </div>
+                        </li>
+                      )
+                    })
+                  }
 
-        footer {
-          width: 100%;
-          height: 100px;
-          border-top: 1px solid #eaeaea;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
 
-        footer img {
-          margin-left: 0.5rem;
-        }
-
-        footer a {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-
-        a {
-          color: inherit;
-          text-decoration: none;
-        }
-
-        .title a {
-          color: #0070f3;
-          text-decoration: none;
-        }
-
-        .title a:hover,
-        .title a:focus,
-        .title a:active {
-          text-decoration: underline;
-        }
-
-        .title {
-          margin: 0;
-          line-height: 1.15;
-          font-size: 4rem;
-        }
-
-        .title,
-        .description {
-          text-align: center;
-        }
-
-        .description {
-          line-height: 1.5;
-          font-size: 1.5rem;
-        }
-
-        code {
-          background: #fafafa;
-          border-radius: 5px;
-          padding: 0.75rem;
-          font-size: 1.1rem;
-          font-family: Menlo, Monaco, Lucida Console, Liberation Mono,
-            DejaVu Sans Mono, Bitstream Vera Sans Mono, Courier New, monospace;
-        }
-
-        .grid {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-wrap: wrap;
-
-          max-width: 800px;
-          margin-top: 3rem;
-        }
-
-        .card {
-          margin: 1rem;
-          flex-basis: 45%;
-          padding: 1.5rem;
-          text-align: left;
-          color: inherit;
-          text-decoration: none;
-          border: 1px solid #eaeaea;
-          border-radius: 10px;
-          transition: color 0.15s ease, border-color 0.15s ease;
-        }
-
-        .card:hover,
-        .card:focus,
-        .card:active {
-          color: #0070f3;
-          border-color: #0070f3;
-        }
-
-        .card h3 {
-          margin: 0 0 1rem 0;
-          font-size: 1.5rem;
-        }
-
-        .card p {
-          margin: 0;
-          font-size: 1.25rem;
-          line-height: 1.5;
-        }
-
-        .logo {
-          height: 1em;
-        }
-
-        @media (max-width: 600px) {
-          .grid {
-            width: 100%;
-            flex-direction: column;
+                </ul>
+              </div>
+            </Fragment>
           }
-        }
-      `}</style>
-
-      <style jsx global>{`
-        html,
-        body {
-          padding: 0;
-          margin: 0;
-          font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto,
-            Oxygen, Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue,
-            sans-serif;
-        }
-
-        * {
-          box-sizing: border-box;
-        }
-      `}</style>
-    </div>
-  )
+        </div>
+      </div>
+    )
+  }
 }
+
+function mapStateToProps(state) {
+  const { jobAddCount, activeResumeCount, positionMatchedCount } = state;
+  return {
+    jobAddCount,
+    activeResumeCount,
+    positionMatchedCount
+  };
+}
+
+const connectedCounterSection = connect(mapStateToProps)(
+  CounterSection
+);
+export default withTranslation('translation')(connectedCounterSection);
